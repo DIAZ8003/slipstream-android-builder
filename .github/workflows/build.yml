@@ -1,3 +1,5 @@
+name: Build Slipstream Client
+
 on:
   push:
   pull_request:
@@ -7,17 +9,16 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         target:
-          - { goos: android, goarch: arm,    out: client-android-arm }
-          - { goos: android, goarch: arm64,  out: client-android-arm64 }
-          - { goos: linux,   goarch: arm,    out: tarm }
-          - { goos: linux,   goarch: arm64,  out: tarm64 }
-          - { goos: windows, goarch: amd64,  out: win.exe }
+          - { goos: "linux", goarch: "arm",   out: "client-termux-arm" }
+          - { goos: "linux", goarch: "arm64", out: "client-termux-arm64" }
+          - { goos: "linux", goarch: "amd64", out: "client-linux-amd64" }
+          - { goos: "windows", goarch: "amd64", out: "client-windows-amd64.exe" }
 
     steps:
-
-      - name: Checkout repo
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Go
