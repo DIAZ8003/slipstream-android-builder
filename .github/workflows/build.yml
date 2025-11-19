@@ -2,7 +2,7 @@ name: Build Slipstream Client Multi-Arch
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -23,6 +23,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Install Android NDK (required for CGO)
+        if: matrix.target.goos == 'android'
+        uses: nttld/setup-android@v2
+        with:
+          ndk: r26d
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -33,6 +39,8 @@ jobs:
         env:
           GOOS: ${{ matrix.target.goos }}
           GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: ${{ matrix.target.goos == 'android' && '1' || '0' }}
+          CC: ${{ matrix.target.goos == 'android' && 'clang' || '' }}
         run: |
           mkdir -p builds
           go build -trimpath -ldflags "-s -w" \
