@@ -1,9 +1,8 @@
-name: Slipstream Build
+name: Build Slipstream Client
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,33 +10,27 @@ jobs:
 
     strategy:
       matrix:
-        go: [ "1.22.x" ]
-        target:
-          - { GOOS: android, GOARCH: arm64, OUT: slipstream-client-android-arm64 }
-          - { GOOS: linux,   GOARCH: amd64, OUT: slipstream-client-linux-amd64 }
-          - { GOOS: linux,   GOARCH: arm64, OUT: slipstream-client-linux-arm64 }
+        goos: [linux, android, windows]
+        goarch: [amd64, arm64, 386]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.22.0'
 
-      - name: Build Slipstream Client
+      - name: Build client
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
         run: |
-          cd slipstream-client
-          GOOS=${{ matrix.target.GOOS }} GOARCH=${{ matrix.target.GOARCH }} \
-          go build -trimpath -ldflags "-s -w" -o ../builds/${{ matrix.target.OUT }}
+          mkdir -p builds
+          go build -trimpath -ldflags "-s -w" -o builds/client-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/client
 
-      - name: Build Slipstream Server (Linux only)
-        if: matrix.target.GOOS == 'linux'
-        run: |
-          cd slipstream-server
-          GOARCH=${{ matrix.target.GOARCH }} \
-          go build -trimpath -ldflags "-s -w" -o ../builds/slipstream-server-${{ matrix.target.GOARCH }}
-
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: slipstream-builds
