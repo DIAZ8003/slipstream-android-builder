@@ -37,5 +37,5 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: slipstream-client
-          path: builds/
+          name: slipstream-client-${{ matrix.target.GOARCH }}
+          path: builds/client-${{ matrix.target.GOARCH }}
