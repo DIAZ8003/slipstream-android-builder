@@ -24,7 +24,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Instalación del SDK + NDK de Android
       - name: Install Android SDK + NDK
         if: matrix.target.goos == 'android'
         uses: android-actions/setup-android@v3
@@ -37,6 +36,21 @@ jobs:
         with:
           go-version: '1.23'
 
+      - name: Configure Android NDK toolchain
+        if: matrix.target.goos == 'android'
+        run: |
+          echo "Configuring NDK..."
+          if [ "${{ matrix.target.goarch }}" = "arm" ]; then
+            export TARGET=armv7a-linux-androideabi
+          else
+            export TARGET=aarch64-linux-android
+          fi
+
+          export API=33
+          export TOOLCHAIN=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64
+          echo "CC=$TOOLCHAIN/bin/$TARGET$API-clang" >> $GITHUB_ENV
+          echo "CXX=$TOOLCHAIN/bin/$TARGET$API-clang++" >> $GITHUB_ENV
+
       - name: Build client
         env:
           GOOS: ${{ matrix.target.goos }}
@@ -44,11 +58,6 @@ jobs:
           CGO_ENABLED: ${{ matrix.target.goos == 'android' && '1' || '0' }}
         run: |
           mkdir -p builds
-
-          if [ "${{ matrix.target.goos }}" = "android" ]; then
-            export CC=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-          fi
-
           go build -trimpath -ldflags "-s -w" \
             -o builds/${{ matrix.target.out }} ./cmd/client
 
