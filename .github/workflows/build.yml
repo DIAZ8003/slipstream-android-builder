@@ -1,40 +1,41 @@
-name: Slipstream Android Builder
+name: Build Slipstream Client
 
 on:
   push:
   pull_request:
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: android
-            goarch: arm64
-          - goos: android
-            goarch: arm
+        target:
+          - { GOOS: linux, GOARCH: arm }
+          - { GOOS: linux, GOARCH: arm64 }
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.22
+          go-version: "1.22.x"
 
-      - name: Build Slipstream Client
+      - name: Build Client
+        env:
+          GOOS: ${{ matrix.target.GOOS }}
+          GOARCH: ${{ matrix.target.GOARCH }}
         run: |
-          cd slipstream-android-builder
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -trimpath -ldflags "-s -w" -o builds/client-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/client
+          mkdir -p builds
+          go build -trimpath -ldflags "-s -w" \
+            -o builds/client-${{ matrix.target.GOARCH }} \
+            ./cmd/client
 
-      - name: Upload artifacts
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: slipstream-builds
-          path: slipstream-android-builder/builds/
+          name: slipstream-client
+          path: builds/
