@@ -1,5 +1,3 @@
-name: Build Slipstream Client
-
 on:
   push:
   pull_request:
@@ -9,13 +7,16 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
       matrix:
         target:
-          - { GOOS: linux, GOARCH: arm }
-          - { GOOS: linux, GOARCH: arm64 }
+          - { goos: android, goarch: arm,    out: client-android-arm }
+          - { goos: android, goarch: arm64,  out: client-android-arm64 }
+          - { goos: linux,   goarch: arm,    out: tarm }
+          - { goos: linux,   goarch: arm64,  out: tarm64 }
+          - { goos: windows, goarch: amd64,  out: win.exe }
 
     steps:
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -24,18 +25,17 @@ jobs:
         with:
           go-version: "1.22.x"
 
-      - name: Build Client
+      - name: Build Slipstream Client
         env:
-          GOOS: ${{ matrix.target.GOOS }}
-          GOARCH: ${{ matrix.target.GOARCH }}
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
         run: |
           mkdir -p builds
           go build -trimpath -ldflags "-s -w" \
-            -o builds/client-${{ matrix.target.GOARCH }} \
-            ./cmd/client
+            -o builds/${{ matrix.target.out }} ./cmd/client
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: slipstream-client-${{ matrix.target.GOARCH }}
-          path: builds/client-${{ matrix.target.GOARCH }}
+          name: slipstream-client
+          path: builds/
