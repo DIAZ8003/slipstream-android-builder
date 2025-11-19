@@ -23,12 +23,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Install Android NDK (required for CGO)
+
+      # Instalación del SDK + NDK de Android
+      - name: Install Android SDK + NDK
         if: matrix.target.goos == 'android'
-        uses: nttld/setup-android@v2
+        uses: android-actions/setup-android@v3
         with:
-          ndk: r26d
+          api-level: 33
+          ndk: 26.1.10909125
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -40,9 +42,13 @@ jobs:
           GOOS: ${{ matrix.target.goos }}
           GOARCH: ${{ matrix.target.goarch }}
           CGO_ENABLED: ${{ matrix.target.goos == 'android' && '1' || '0' }}
-          CC: ${{ matrix.target.goos == 'android' && 'clang' || '' }}
         run: |
           mkdir -p builds
+
+          if [ "${{ matrix.target.goos }}" = "android" ]; then
+            export CC=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
+          fi
+
           go build -trimpath -ldflags "-s -w" \
             -o builds/${{ matrix.target.out }} ./cmd/client
 
