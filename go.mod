@@ -1,3 +1,3 @@
 module github.com/DIAZ8003/slipstream-android-builder
 
-go 1.13
+go 1.24.2
